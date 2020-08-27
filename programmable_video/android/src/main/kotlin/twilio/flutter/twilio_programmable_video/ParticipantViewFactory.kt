@@ -1,6 +1,9 @@
 package twilio.flutter.twilio_programmable_video
 
 import android.content.Context
+import android.view.Gravity
+import android.widget.FrameLayout
+import android.widget.RelativeLayout
 import com.twilio.video.VideoScaleType
 import com.twilio.video.VideoTrack
 import com.twilio.video.VideoView
@@ -34,7 +37,18 @@ class ParticipantViewFactory(createArgsCodec: MessageCodec<Any>, private val plu
             if (videoTrack != null) {
                 val videoView = VideoView(context)
                 videoView.mirror = params["mirror"] as Boolean
+
+                // fit video
                 videoView.videoScaleType = VideoScaleType.ASPECT_FIT
+
+                // VideoScaleType requires WRAP_CONTENT to work properly
+                // related issue https://github.com/twilio/video-quickstart-android/issues/381
+                videoView.layoutParams = FrameLayout.LayoutParams(
+                        RelativeLayout.LayoutParams.WRAP_CONTENT,
+                        RelativeLayout.LayoutParams.WRAP_CONTENT,
+                        Gravity.CENTER
+                )
+
                 return ParticipantView(videoView, videoTrack)
             }
         }
