@@ -1,13 +1,13 @@
-import 'package:intl/intl.dart';
 import 'package:enum_to_string/enum_to_string.dart';
+import 'package:intl/intl.dart';
 import 'package:recase/recase.dart';
 import 'package:twilio_programmable_video_example/models/twilio_enums.dart';
 
 class TwilioListRoomRequest {
-  final DateTime dateCreatedAfter;
-  final DateTime dateCreatedBefore;
-  final int limit;
-  final TwilioRoomStatus status;
+  final DateTime? dateCreatedAfter;
+  final DateTime? dateCreatedBefore;
+  final int? limit;
+  final TwilioRoomStatus? status;
   final String uniqueName;
 
   TwilioListRoomRequest({
@@ -15,13 +15,10 @@ class TwilioListRoomRequest {
     this.dateCreatedBefore,
     this.limit,
     this.status,
-    this.uniqueName,
+    required this.uniqueName,
   });
 
   factory TwilioListRoomRequest.fromMap(Map<String, dynamic> data) {
-    if (data == null) {
-      return null;
-    }
     return TwilioListRoomRequest(
       dateCreatedAfter: DateTime.tryParse(data['dateCreatedAfter'] ?? ''),
       dateCreatedBefore: DateTime.tryParse(data['dateCreatedBefore'] ?? ''),
@@ -33,10 +30,10 @@ class TwilioListRoomRequest {
 
   Map<String, dynamic> toMap() {
     return {
-      'dateCreatedAfter': DateFormat('yyyy-MM-dd').format(dateCreatedAfter),
-      'dateCreatedBefore': DateFormat('yyyy-MM-dd').format(dateCreatedBefore),
+      'dateCreatedAfter': DateFormat('yyyy-MM-dd').format(dateCreatedAfter!),
+      'dateCreatedBefore': DateFormat('yyyy-MM-dd').format(dateCreatedBefore!),
       'limit': limit,
-      'status': status != null ? EnumToString.parse(status).paramCase : null,
+      'status': status != null ? EnumToString.convertToString(status).paramCase : null,
       'uniqueName': uniqueName,
     };
   }

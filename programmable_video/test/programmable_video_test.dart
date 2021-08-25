@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:twilio_programmable_video/src/parts.dart';
 import 'package:twilio_programmable_video_platform_interface/twilio_programmable_video_platform_interface.dart';
+
 import 'mock_platform_interface.dart';
 
 void main() {
@@ -44,6 +45,28 @@ void main() {
       final result = await TwilioProgrammableVideo.getSpeakerphoneOn();
       expect(mockInterface.getSpeakerPhoneOnWasCalled, true);
       expect(result, on);
+    });
+  });
+
+  group('.deviceHasReceiver()', () {
+    final mockInterface = MockInterface();
+    setUpAll(() => ProgrammableVideoPlatform.instance = mockInterface);
+
+    test('should call interface code to check if device has a receiver', () async {
+      final result = await TwilioProgrammableVideo.deviceHasReceiver();
+      expect(mockInterface.deviceHasReceiverWasCalled, true);
+      expect(result, true);
+    });
+  });
+
+  group('.getStats()', () {
+    final mockInterface = MockInterface();
+    setUpAll(() => ProgrammableVideoPlatform.instance = mockInterface);
+
+    test('should call interface code to get Stats', () async {
+      final result = await TwilioProgrammableVideo.getStats();
+      expect(mockInterface.getStatsWasCalled, true);
+      expect(result, []);
     });
   });
 
@@ -150,6 +173,11 @@ void main() {
   });
 }
 
-class MockConnectOptions extends Mock implements ConnectOptions {}
+class MockConnectOptions extends Mock implements ConnectOptions {
+  @override
+  ConnectOptionsModel toModel() {
+    return ConnectOptionsModel('accessToken');
+  }
+}
 
 class MockConnectOptionsModel extends Mock implements ConnectOptionsModel {}

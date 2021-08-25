@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
+import 'package:twilio_programmable_video_platform_interface/src/enums/enum_exports.dart';
 import 'package:twilio_programmable_video_platform_interface/src/models/model_exports.dart';
 
 /// The base remoteParticipantEvent that all other RemoteParticipantEvent types must extend.
 abstract class BaseRemoteParticipantEvent {
-  final RemoteParticipantModel remoteParticipantModel;
+  final RemoteParticipantModel? remoteParticipantModel;
 
   const BaseRemoteParticipantEvent(this.remoteParticipantModel);
 
@@ -56,13 +56,10 @@ class RemoteAudioTrackSubscribed extends BaseRemoteParticipantEvent {
   final RemoteAudioTrackModel remoteAudioTrackModel;
 
   const RemoteAudioTrackSubscribed({
-    @required RemoteParticipantModel remoteParticipantModel,
-    @required this.remoteAudioTrackPublicationModel,
-    @required this.remoteAudioTrackModel,
-  })  : assert(remoteParticipantModel != null),
-        assert(remoteAudioTrackPublicationModel != null),
-        assert(remoteAudioTrackModel != null),
-        super(remoteParticipantModel);
+    required RemoteParticipantModel remoteParticipantModel,
+    required this.remoteAudioTrackPublicationModel,
+    required this.remoteAudioTrackModel,
+  }) : super(remoteParticipantModel);
 
   @override
   String toString() => '''RemoteAudioTrackSubscribed: { 
@@ -76,13 +73,10 @@ class RemoteAudioTrackSubscriptionFailed extends BaseRemoteParticipantEvent {
   final TwilioExceptionModel exception;
 
   const RemoteAudioTrackSubscriptionFailed({
-    @required RemoteParticipantModel remoteParticipantModel,
-    @required this.remoteAudioTrackPublicationModel,
-    @required this.exception,
-  })  : assert(remoteParticipantModel != null),
-        assert(remoteAudioTrackPublicationModel != null),
-        assert(exception != null),
-        super(remoteParticipantModel);
+    required RemoteParticipantModel remoteParticipantModel,
+    required this.remoteAudioTrackPublicationModel,
+    required this.exception,
+  }) : super(remoteParticipantModel);
 
   @override
   String toString() => '''RemoteAudioTrackSubscriptionFailed: { 
@@ -109,13 +103,10 @@ class RemoteAudioTrackUnsubscribed extends BaseRemoteParticipantEvent {
   final RemoteAudioTrackModel remoteAudioTrackModel;
 
   const RemoteAudioTrackUnsubscribed({
-    @required RemoteParticipantModel remoteParticipantModel,
-    @required this.remoteAudioTrackPublicationModel,
-    @required this.remoteAudioTrackModel,
-  })  : assert(remoteParticipantModel != null),
-        assert(remoteAudioTrackPublicationModel != null),
-        assert(remoteAudioTrackModel != null),
-        super(remoteParticipantModel);
+    required RemoteParticipantModel remoteParticipantModel,
+    required this.remoteAudioTrackPublicationModel,
+    required this.remoteAudioTrackModel,
+  }) : super(remoteParticipantModel);
 
   @override
   String toString() => '''RemoteAudioTrackUnsubscribed: { 
@@ -142,13 +133,10 @@ class RemoteDataTrackSubscribed extends BaseRemoteParticipantEvent {
   final RemoteDataTrackModel remoteDataTrackModel;
 
   const RemoteDataTrackSubscribed({
-    @required RemoteParticipantModel remoteParticipantModel,
-    @required this.remoteDataTrackPublicationModel,
-    @required this.remoteDataTrackModel,
-  })  : assert(remoteParticipantModel != null),
-        assert(remoteDataTrackPublicationModel != null),
-        assert(remoteDataTrackModel != null),
-        super(remoteParticipantModel);
+    required RemoteParticipantModel remoteParticipantModel,
+    required this.remoteDataTrackPublicationModel,
+    required this.remoteDataTrackModel,
+  }) : super(remoteParticipantModel);
 
   @override
   String toString() => '''RemoteDataTrackSubscribed: { 
@@ -162,13 +150,10 @@ class RemoteDataTrackSubscriptionFailed extends BaseRemoteParticipantEvent {
   final TwilioExceptionModel exception;
 
   const RemoteDataTrackSubscriptionFailed({
-    @required RemoteParticipantModel remoteParticipantModel,
-    @required this.remoteDataTrackPublicationModel,
-    @required this.exception,
-  })  : assert(remoteParticipantModel != null),
-        assert(remoteDataTrackPublicationModel != null),
-        assert(exception != null),
-        super(remoteParticipantModel);
+    required RemoteParticipantModel remoteParticipantModel,
+    required this.remoteDataTrackPublicationModel,
+    required this.exception,
+  }) : super(remoteParticipantModel);
 
   @override
   String toString() => '''RemoteDataTrackSubscriptionFailed: { 
@@ -195,13 +180,10 @@ class RemoteDataTrackUnsubscribed extends BaseRemoteParticipantEvent {
   final RemoteDataTrackModel remoteDataTrackModel;
 
   const RemoteDataTrackUnsubscribed({
-    @required RemoteParticipantModel remoteParticipantModel,
-    @required this.remoteDataTrackPublicationModel,
-    @required this.remoteDataTrackModel,
-  })  : assert(remoteParticipantModel != null),
-        assert(remoteDataTrackPublicationModel != null),
-        assert(remoteDataTrackModel != null),
-        super(remoteParticipantModel);
+    required RemoteParticipantModel remoteParticipantModel,
+    required this.remoteDataTrackPublicationModel,
+    required this.remoteDataTrackModel,
+  }) : super(remoteParticipantModel);
 
   @override
   String toString() => '''RemoteDataTrackUnsubscribed: { 
@@ -254,13 +236,10 @@ class RemoteVideoTrackSubscribed extends BaseRemoteParticipantEvent {
   final RemoteVideoTrackModel remoteVideoTrackModel;
 
   const RemoteVideoTrackSubscribed({
-    @required RemoteParticipantModel remoteParticipantModel,
-    @required this.remoteVideoTrackPublicationModel,
-    @required this.remoteVideoTrackModel,
-  })  : assert(remoteParticipantModel != null),
-        assert(remoteVideoTrackPublicationModel != null),
-        assert(remoteVideoTrackModel != null),
-        super(remoteParticipantModel);
+    required RemoteParticipantModel remoteParticipantModel,
+    required this.remoteVideoTrackPublicationModel,
+    required this.remoteVideoTrackModel,
+  }) : super(remoteParticipantModel);
 
   @override
   String toString() => '''RemoteVideoTrackSubscribed: { 
@@ -274,13 +253,10 @@ class RemoteVideoTrackSubscriptionFailed extends BaseRemoteParticipantEvent {
   final TwilioExceptionModel exception;
 
   const RemoteVideoTrackSubscriptionFailed({
-    @required RemoteParticipantModel remoteParticipantModel,
-    @required this.remoteVideoTrackPublicationModel,
-    @required this.exception,
-  })  : assert(remoteParticipantModel != null),
-        assert(remoteVideoTrackPublicationModel != null),
-        assert(exception != null),
-        super(remoteParticipantModel);
+    required RemoteParticipantModel remoteParticipantModel,
+    required this.remoteVideoTrackPublicationModel,
+    required this.exception,
+  }) : super(remoteParticipantModel);
 
   @override
   String toString() => '''RemoteVideoTrackSubscriptionFailed: { 
@@ -307,18 +283,25 @@ class RemoteVideoTrackUnsubscribed extends BaseRemoteParticipantEvent {
   final RemoteVideoTrackModel remoteVideoTrackModel;
 
   const RemoteVideoTrackUnsubscribed({
-    @required RemoteParticipantModel remoteParticipantModel,
-    @required this.remoteVideoTrackPublicationModel,
-    @required this.remoteVideoTrackModel,
-  })  : assert(remoteParticipantModel != null),
-        assert(remoteVideoTrackPublicationModel != null),
-        assert(remoteVideoTrackModel != null),
-        super(remoteParticipantModel);
+    required RemoteParticipantModel remoteParticipantModel,
+    required this.remoteVideoTrackPublicationModel,
+    required this.remoteVideoTrackModel,
+  }) : super(remoteParticipantModel);
 
   @override
   String toString() => '''RemoteVideoTrackUnsubscribed: { 
     remoteParticipantModel: $remoteParticipantModel, remoteVideoTrackPublicationModel: $remoteVideoTrackPublicationModel, remoteVideoTrackModel: $remoteVideoTrackModel
   }''';
+}
+
+/// Use this event if the network quality level changed.
+class RemoteNetworkQualityLevelChanged extends BaseRemoteParticipantEvent {
+  final NetworkQualityLevel networkQualityLevel;
+
+  const RemoteNetworkQualityLevelChanged(RemoteParticipantModel remoteParticipantModel, this.networkQualityLevel) : super(remoteParticipantModel);
+
+  @override
+  String toString() => 'RemoteNetworkQualityLevelChanged: { remoteParticipantModel: $remoteParticipantModel, networkQualityLevel: $networkQualityLevel}';
 }
 
 /// Use this event if an invalid RemoteParticipantEvent is received from native code which should be skipped.

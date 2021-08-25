@@ -67,10 +67,8 @@ class RoomListener: BaseListener, RoomDelegate {
     }
 
     func dominantSpeakerDidChange(room: Room, participant: RemoteParticipant?) {
-        if let participant = participant {
-            SwiftTwilioProgrammableVideoPlugin.debug("RoomListener.dominantSpeakerDidChange => room sid is '\(room.sid)', dominantSpeaker sid is '\(String(describing: participant.sid))'")
-            sendEvent("dominantSpeakerChanged", data: [ "room": roomToDict(room) as Any, "remoteParticipant": RemoteParticipantListener.remoteParticipantToDict(participant) as Any ])
-        }
+        SwiftTwilioProgrammableVideoPlugin.debug("RoomListener.dominantSpeakerDidChange => room sid is '\(room.sid)', dominantSpeaker sid is '\(participant != nil ? String(describing: participant!.sid) : "N/A")'")
+        sendEvent("dominantSpeakerChanged", data: [ "room": roomToDict(room) as Any, "remoteParticipant": (participant != nil ? RemoteParticipantListener.remoteParticipantToDict(participant!) : nil) as Any])
     }
 
     private func remoteParticipantsToArray(_ remoteParticipants: [RemoteParticipant]) -> [[String: Any]] {
@@ -108,28 +106,5 @@ class RoomListener: BaseListener, RoomDelegate {
        }
 
        return dict
-    }
-
-    public static func videoSourceToDict(_ videoSource: VideoSource?) -> [String: Any] {
-        if let cameraSource = videoSource as? CameraSource {
-            var cameraSourceType: String
-            switch cameraSource.device?.position {
-                case .front:
-                    cameraSourceType = "FRONT_CAMERA"
-                case .back:
-                    cameraSourceType = "BACK_CAMERA"
-                default:
-                    cameraSourceType = "UNKNOWN"
-            }
-
-            return [
-                "type": "CameraCapturer",
-                "cameraSource": cameraSourceType
-            ]
-        }
-        return [
-            "type": "Unknown",
-            "isScreenCast": videoSource?.isScreencast ?? false
-        ]
     }
 }

@@ -1,27 +1,27 @@
-import 'package:flutter/foundation.dart';
-
+import 'package:dartlin/dartlin.dart';
+import 'package:enum_to_string/enum_to_string.dart';
+import 'package:twilio_programmable_video_platform_interface/src/enums/enum_exports.dart';
 import 'package:twilio_programmable_video_platform_interface/src/models/model_exports.dart';
 
 /// Model that a plugin implementation can use to construct a RemoteParticipant.
 class RemoteParticipantModel {
   final String identity;
-  final String sid;
+  final String? sid;
 
   final List<RemoteAudioTrackPublicationModel> remoteAudioTrackPublications;
   final List<RemoteDataTrackPublicationModel> remoteDataTrackPublications;
   final List<RemoteVideoTrackPublicationModel> remoteVideoTrackPublications;
 
+  final NetworkQualityLevel networkQualityLevel;
+
   const RemoteParticipantModel({
-    @required this.identity,
-    @required this.sid,
-    @required this.remoteAudioTrackPublications,
-    @required this.remoteDataTrackPublications,
-    @required this.remoteVideoTrackPublications,
-  })  : assert(identity != null),
-        assert(sid != null),
-        assert(remoteAudioTrackPublications != null),
-        assert(remoteDataTrackPublications != null),
-        assert(remoteVideoTrackPublications != null);
+    required this.identity,
+    this.sid,
+    required this.remoteAudioTrackPublications,
+    required this.remoteDataTrackPublications,
+    required this.remoteVideoTrackPublications,
+    required this.networkQualityLevel,
+  });
 
   factory RemoteParticipantModel.fromEventChannelMap(Map<String, dynamic> map) {
     var remoteAudioTrackPublications = <RemoteAudioTrackPublicationModel>[];
@@ -51,13 +51,18 @@ class RemoteParticipantModel {
       }
     }
 
+    final networkQualityLevel = (map['networkQualityLevel'] as String?)?.let((it) {
+          return EnumToString.fromString(NetworkQualityLevel.values, it) ?? NetworkQualityLevel.NETWORK_QUALITY_LEVEL_UNKNOWN;
+        }) ??
+        NetworkQualityLevel.NETWORK_QUALITY_LEVEL_UNKNOWN;
+
     return RemoteParticipantModel(
-      identity: map['identity'],
-      sid: map['sid'],
-      remoteAudioTrackPublications: remoteAudioTrackPublications,
-      remoteDataTrackPublications: remoteDataTrackPublications,
-      remoteVideoTrackPublications: remoteVideoTrackPublications,
-    );
+        identity: map['identity'],
+        sid: map['sid'],
+        remoteAudioTrackPublications: remoteAudioTrackPublications,
+        remoteDataTrackPublications: remoteDataTrackPublications,
+        remoteVideoTrackPublications: remoteVideoTrackPublications,
+        networkQualityLevel: networkQualityLevel);
   }
 
   @override
@@ -79,10 +84,11 @@ class RemoteParticipantModel {
 
     return '''{ 
       identity: $identity,
-      sid: $sid,
+      sid: ${sid ?? ''},
       remoteAudioTrackPublications: [ $remoteAudioTrackPublicationsString ],
       remoteDataTrackPublications: [ $remoteDataTrackPublicationsString ],
-      remoteVideoTrackPublications: [ $remoteVideoTrackPublicationsString ]
+      remoteVideoTrackPublications: [ $remoteVideoTrackPublicationsString ],
+      networkQualityLevel: $networkQualityLevel
       }''';
   }
 }

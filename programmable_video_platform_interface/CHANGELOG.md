@@ -1,3 +1,46 @@
+## 0.6.0
+
+- **BREAKING**: Replaced `CameraSource` enum with a class variant to represent a potential source for camera capturing.
+- **BREAKING**: Removed `hasTorch()` from the interface as this value is now accessible on the new `CameraSource` class.
+- **BREAKING**: `switchCamera()` now expects a `CameraSource` as an argument, it should switch to that source when called.
+- Added `getSources()` on the interface which should return all potential `CameraSource`s a device has.
+
+## 0.5.0
+
+- **BREAKING**: Made `exception` property of ConnectFailure, Reconnecting and Disconnected events nullable.
+
+## 0.4.0+1
+
+- Removed incorrect `!` from `local_video_track_model.dart`.
+
+## 0.4.0
+
+- **BREAKING CHANGE**: Added null safety support.
+
+## 0.3.2
+
+- Added method for fetching stats.
+
+## 0.3.1
+
+- Added method for checking if device has a builtin earpiece.
+
+## 0.3.0
+
+- **BREAKING CHANGE**: Updated plugin_platform_interface dep.
+
+## 0.2.3
+
+- Added support for Network Quality API.
+
+## 0.2.2
+
+- Added `enableRemoteAudioTrack({bool enable, String sid})` and `isRemoteAudioTrackPlaybackEnabled(String sid)` methods.
+
+## 0.2.1+0
+
+- Added `hasTorch()` and `setTorch(bool enabled)` methods.
+
 ## 0.2.0+1
 
 - Fixed unhandled exception when receiving a remote data track message.

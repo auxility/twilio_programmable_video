@@ -1,6 +1,5 @@
 package twilio.flutter.twilio_programmable_video
 
-import com.twilio.video.CameraCapturer
 import com.twilio.video.LocalAudioTrack
 import com.twilio.video.LocalAudioTrackPublication
 import com.twilio.video.LocalDataTrack
@@ -8,8 +7,8 @@ import com.twilio.video.LocalDataTrackPublication
 import com.twilio.video.LocalParticipant
 import com.twilio.video.LocalVideoTrack
 import com.twilio.video.LocalVideoTrackPublication
+import com.twilio.video.NetworkQualityLevel
 import com.twilio.video.TwilioException
-import com.twilio.video.VideoCapturer
 
 class LocalParticipantListener : BaseListener(), LocalParticipant.Listener {
 
@@ -36,6 +35,15 @@ class LocalParticipantListener : BaseListener(), LocalParticipant.Listener {
                 "localParticipant" to localParticipantToMap(localParticipant),
                 "localDataTrack" to localDataTrackToMap(localDataTrack)
         ), twilioException)
+    }
+
+    override fun onNetworkQualityLevelChanged(localParticipant: LocalParticipant, networkQualityLevel: NetworkQualityLevel) {
+        TwilioProgrammableVideoPlugin.debug("LocalParticipantListener.onNetworkQualityLevelChanged => " +
+                "sid: ${localParticipant.sid}")
+        sendEvent("networkQualityLevelChanged", mapOf(
+                "localParticipant" to localParticipantToMap(localParticipant),
+                "networkQualityLevel" to networkQualityLevel.toString()
+        ))
     }
 
     override fun onAudioTrackPublished(localParticipant: LocalParticipant, localAudioTrackPublication: LocalAudioTrackPublication) {
@@ -136,21 +144,7 @@ class LocalParticipantListener : BaseListener(), LocalParticipant.Listener {
             return mapOf(
                     "name" to localVideoTrack.name,
                     "enabled" to localVideoTrack.isEnabled,
-                    "videoCapturer" to videoCapturerToMap(localVideoTrack.videoCapturer)
-            )
-        }
-
-        @JvmStatic
-        fun videoCapturerToMap(videoCapturer: VideoCapturer): Map<String, Any> {
-            if (videoCapturer is CameraCapturer) {
-                return mapOf(
-                        "type" to "CameraCapturer",
-                        "cameraSource" to videoCapturer.cameraSource.toString()
-                )
-            }
-            return mapOf(
-                    "type" to "Unknown",
-                    "isScreencast" to videoCapturer.isScreencast
+                    "videoCapturer" to VideoCapturerHandler.videoCapturerToMap(localVideoTrack.videoCapturer)
             )
         }
     }

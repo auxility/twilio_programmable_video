@@ -10,7 +10,7 @@ Check out our comprehensive [example](https://gitlab.com/twilio-flutter/programm
 [![Twilio Programmable Video Example](https://j.gifs.com/5QEyOB.gif)](https://gitlab.com/twilio-flutter/programmable-video/-/tree/master/programmable_video/example "Twilio Programmable Video Example")
 
 ## Join the community
-If you have any question or problems, please join us on [Discord](https://discord.gg/42x46NH)
+If you have any question or problems, please join us on [Discord](https://discord.gg/MWnu4nW)
 
 ## FAQ
 Read the [Frequently Asked Questions](https://gitlab.com/twilio-flutter/programmable-video/-/blob/master/programmable_video/FAQ.md) first before creating a new issue.
@@ -105,8 +105,8 @@ Call `TwilioProgrammableVideo.connect()` to connect to a Room in your Flutter ap
 Room _room;
 final Completer<Room> _completer = Completer<Room>();
 
-void _onConnected(RoomConnectedEvent event) {
-  print('Connected to ${event.room.name}');
+void _onConnected(Room room) {
+  print('Connected to ${room.name}');
   _completer.complete(_room);
 }
 
@@ -116,6 +116,12 @@ void _onConnectFailure(RoomConnectFailureEvent event) {
 }
   
 Future<Room> connectToRoom() async {
+  // Retrieve the camera source of your choosing
+  var cameraSources = await CameraSource.getSources(); 
+  var cameraCapturer = CameraCapturer(
+    cameraSources.firstWhere((source) => source.isFrontFacing),
+  );
+
   var connectOptions = ConnectOptions(
     accessToken,
     roomName: roomName,                   // Optional name for the room
@@ -133,7 +139,7 @@ Future<Room> connectToRoom() async {
         ),                                // Optional
       ),
     ],                                    // Optional list of data tracks   
-    videoTracks: ([LocalVideoTrack(true, CameraCapturer(CameraSource.FRONT_CAMERA))]), // Optional list of video tracks.
+    videoTracks: [LocalVideoTrack(true, cameraCapturer)], // Optional list of video tracks.
   );
   _room = await TwilioProgrammableVideo.connect(connectOptions);
   _room.onConnected.listen(_onConnected);
@@ -162,6 +168,12 @@ void _onConnectFailure(RoomConnectFailureEvent event) {
 }
   
 Future<Room> connectToRoom() async {
+  // Retrieve the camera source of your choosing
+  var cameraSources = await CameraSource.getSources(); 
+  var cameraCapturer = CameraCapturer(
+    cameraSources.firstWhere((source) => source.isFrontFacing),
+  );
+
   var connectOptions = ConnectOptions(
     accessToken,
     roomName: roomName,
@@ -179,7 +191,7 @@ Future<Room> connectToRoom() async {
         ),                                // Optional
       ),
     ],                                    // Optional list of data tracks
-    videoTracks([LocalVideoTrack(true, CameraCapturer(CameraSource.FRONT_CAMERA))]), // Optional list of video tracks. 
+    videoTracks([LocalVideoTrack(true, cameraCapturer)]), // Optional list of video tracks. 
   );
   _room = await TwilioProgrammableVideo.connect(connectOptions);
   _room.onConnected.listen(_onConnected);
@@ -195,8 +207,11 @@ You can capture local media from your device's microphone or camera in the follo
 // Create an audio track.
 var localAudioTrack = LocalAudioTrack(true);
 
-// A video track request an implementation of VideoCapturer.
-var cameraCapturer = CameraCapturer(CameraSource.FRONT_CAMERA);
+// Retrieve the camera source of your choosing
+var cameraSources = await CameraSource.getSources(); 
+var cameraCapturer = CameraCapturer(
+  cameraSources.firstWhere((source) => source.isFrontFacing),
+);
 
 // Create a video track.
 var localVideoTrack = LocalVideoTrack(true, cameraCapturer);
@@ -368,7 +383,10 @@ The `CameraCapturer` class is used to provide video frames for `LocalVideoTrack`
 
 ```dart
 // Share your camera.
-var cameraCapturer = CameraCapturer(CameraSource.FRONT_CAMERA);
+var cameraSources = await CameraSource.getSources(); 
+var cameraCapturer = CameraCapturer(
+  cameraSources.firstWhere((source) => source.isFrontFacing),
+);
 var localVideoTrack = LocalVideoTrack(true, cameraCapturer);
 
 // Render camera to a widget (only after connect event).
@@ -377,9 +395,10 @@ var widget = localVideoTrack.widget(mirror);
 _widgets.add(widget);
 
 // Switch the camera source.
-var cameraSource = cameraCapturer.getCameraSource();
-cameraCapturer.switchCamera();
-primaryVideoView.setMirror(cameraSource == CameraSource.BACK_CAMERA);
+var cameraSources = await CameraSource.getSources(); 
+var cameraSource = cameraSources.firstWhere((source) => source.isBackFacing);
+await cameraCapturer.switchCamera(cameraSource);
+await primaryVideoView.setMirror(cameraSource.isBackFacing);
 ```
 
 ### Selecting a specific Audio output
@@ -395,6 +414,45 @@ TwilioProgrammableVideo.setSpeakerphoneOn(true);
 // Route audio through headset
 TwilioProgrammableVideo.setSpeakerphoneOn(false);
 ```
+
+### Playing audio files to provide a rich user experience
+
+For the purposes of playing audio files while using this plugin, we recommend the [`ocarina`](https://pub.dev/packages/ocarina) plugin (v0.0.5 and upwards).
+
+This recommendation comes after surveying the available plugins for this functionality in the Flutter ecosystem for plugins that play nice with this one.
+
+The primary problem observed with other plugins that provide this functionality is that on iOS the majority of them modify the `AVAudioSession` mode, putting it into a playback only mode, and as a result preventing the video call from recording audio.
+
+The secondary problem with audio file playback in iOS is that [the operating system gives priority to the `VoiceProcessingIO` Audio Unit](https://developer.apple.com/forums/thread/22133), causing other audio sources to be played at a greatly diminished volume when this AudioUnit is in use. To address this issue, we provide the custom `AVAudioEngineDevice` which users of the plugin may enable with the example that follows. `AVAudioEngineDevice` was designed with `ocarina` in mind, providing an interface for delegating audio file playback and management from that plugin to the `AVAudioEngineDevice`. It was adapted from [Twilio's example](https://github.com/twilio/video-quickstart-ios/commit/9fffebbef4f2d3cb2a5cf78bcb76949939c810f8).
+
+To enable usage of the `AVAudioEngineDevice`, and delegate audio file playback management from ocarina to it, update your `AppDelegate.swift`s `didFinishLaunch` method as follows:
+
+```swift
+  override func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+  ) -> Bool {
+    GeneratedPluginRegistrant.register(with: self)
+
+    let audioDevice = AVAudioEngineDevice()
+    SwiftTwilioProgrammableVideoPlugin.audioDevice = audioDevice
+    SwiftOcarinaPlugin.useDelegate(
+        load: audioDevice.addMusicNode,
+        dispose: audioDevice.disposeMusicNode,
+        play: audioDevice.playMusic,
+        pause: audioDevice.pauseMusic,
+        resume: audioDevice.resumeMusic,
+        stop: audioDevice.stopMusic,
+        volume: audioDevice.setMusicVolume,
+        seek: audioDevice.seekPosition,
+        position: audioDevice.getPosition
+    )
+
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+```
+
+Once you have done this, you should be able to continue using this plugin, and `ocarina` as normal.
 
 ## Enable debug logging
 Using the `TwilioProgrammableVideo` class, you can enable native and dart logging of the plugin.
@@ -455,3 +513,7 @@ Reference table of all the events the plugin currently supports
 
 # Development and Contributing
 Interested in contributing? We love merge requests! See the [Contribution](https://gitlab.com/twilio-flutter/programmable-video/-/tree/master/programmable_video/CONTRIBUTING.md) guidelines.
+
+# Contributions By
+
+[![HomeX - Home Repairs Made Easy](https://homex.com/static/brand/homex-logo-green.svg)](https://homex.com)

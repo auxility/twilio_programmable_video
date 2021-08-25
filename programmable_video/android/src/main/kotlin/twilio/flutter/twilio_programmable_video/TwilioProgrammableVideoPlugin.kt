@@ -1,10 +1,12 @@
 package twilio.flutter.twilio_programmable_video
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.annotation.NonNull
-import com.twilio.video.CameraCapturer
 import com.twilio.video.Video
+import com.twilio.video.VideoCapturer
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
@@ -12,10 +14,15 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import io.flutter.plugin.common.StandardMessageCodec
 import io.flutter.plugin.platform.PlatformViewRegistry
+import tvi.webrtc.Camera1Enumerator
+import tvi.webrtc.Camera2Enumerator
+import tvi.webrtc.CameraEnumerator
 
 /** TwilioProgrammableVideoPlugin */
 class TwilioProgrammableVideoPlugin : FlutterPlugin {
     private lateinit var methodChannel: MethodChannel
+
+    private lateinit var cameraChannel: EventChannel
 
     private lateinit var roomChannel: EventChannel
 
@@ -64,15 +71,21 @@ class TwilioProgrammableVideoPlugin : FlutterPlugin {
                 "MI 5"
         )
 
+        lateinit var pluginHandler: PluginHandler
+
+        lateinit var cameraEnumerator: CameraEnumerator
+
         lateinit var roomListener: RoomListener
 
-        lateinit var cameraCapturer: CameraCapturer
+        var cameraCapturer: VideoCapturer? = null
 
         var loggingSink: EventChannel.EventSink? = null
 
         var remoteParticipantListener = RemoteParticipantListener()
 
         var localParticipantListener = LocalParticipantListener()
+
+        var handler = Handler(Looper.getMainLooper())
 
         var nativeDebug: Boolean = false
 
@@ -82,7 +95,9 @@ class TwilioProgrammableVideoPlugin : FlutterPlugin {
         fun debug(msg: String) {
             if (nativeDebug) {
                 Log.d(LOG_TAG, msg)
-                loggingSink?.success(msg)
+                handler.post {
+                    loggingSink?.success(msg)
+                }
             }
         }
     }
@@ -92,9 +107,27 @@ class TwilioProgrammableVideoPlugin : FlutterPlugin {
     }
 
     private fun onAttachedToEngine(applicationContext: Context, messenger: BinaryMessenger, platformViewRegistry: PlatformViewRegistry) {
-        val pluginHandler = PluginHandler(applicationContext)
+        pluginHandler = PluginHandler(applicationContext)
+        cameraEnumerator = if (Camera2Enumerator.isSupported(applicationContext))
+            Camera2Enumerator(applicationContext)
+        else
+            Camera1Enumerator()
+
         methodChannel = MethodChannel(messenger, "twilio_programmable_video")
         methodChannel.setMethodCallHandler(pluginHandler)
+
+        cameraChannel = EventChannel(messenger, "twilio_programmable_video/camera")
+        cameraChannel.setStreamHandler(object : EventChannel.StreamHandler {
+            override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+                debug("TwilioProgrammableVideoPlugin.onAttachedToEngine => Camera eventChannel attached")
+                pluginHandler.events = events
+            }
+
+            override fun onCancel(arguments: Any?) {
+                debug("TwilioProgrammableVideoPlugin.onAttachedToEngine => Camera eventChannel detached")
+                pluginHandler.events = null
+            }
+        })
 
         roomChannel = EventChannel(messenger, "twilio_programmable_video/room")
         roomChannel.setStreamHandler(object : EventChannel.StreamHandler {

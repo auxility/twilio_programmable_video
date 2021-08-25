@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:twilio_programmable_video_platform_interface/src/enums/enum_exports.dart';
 import 'package:twilio_programmable_video_platform_interface/src/models/model_exports.dart';
 
 import '../model_instances.dart';
@@ -56,6 +56,7 @@ void main() {
 
   final identity = 'identity';
   final sid = 'sid';
+  final networkQualityLevel = NetworkQualityLevel.NETWORK_QUALITY_LEVEL_ONE;
 
   group('.fromEventChannelMap()', () {
     test('should correctly construct from Map', () {
@@ -77,34 +78,29 @@ void main() {
       expect(model.remoteAudioTrackPublications[0].subscribed, publicationSubscribed);
       expect(model.remoteAudioTrackPublications[0].sid, publicationSid);
       expect(model.remoteAudioTrackPublications[0].name, publicationName);
-      expect(model.remoteAudioTrackPublications[0].remoteAudioTrack.name, remoteAudioTrack.name);
-      expect(model.remoteAudioTrackPublications[0].remoteAudioTrack.sid, remoteAudioTrack.sid);
-      expect(model.remoteAudioTrackPublications[0].remoteAudioTrack.enabled, remoteAudioTrack.enabled);
+      expect(model.remoteAudioTrackPublications[0].remoteAudioTrack!.name, remoteAudioTrack.name);
+      expect(model.remoteAudioTrackPublications[0].remoteAudioTrack!.sid, remoteAudioTrack.sid);
+      expect(model.remoteAudioTrackPublications[0].remoteAudioTrack!.enabled, remoteAudioTrack.enabled);
 
       expect(model.remoteDataTrackPublications[0].enabled, publicationEnabled);
       expect(model.remoteDataTrackPublications[0].subscribed, publicationSubscribed);
       expect(model.remoteDataTrackPublications[0].sid, publicationSid);
       expect(model.remoteDataTrackPublications[0].name, publicationName);
-      expect(model.remoteDataTrackPublications[0].remoteDataTrack.enabled, remoteDataTrack.enabled);
-      expect(model.remoteDataTrackPublications[0].remoteDataTrack.sid, remoteDataTrack.sid);
-      expect(model.remoteDataTrackPublications[0].remoteDataTrack.name, remoteDataTrack.name);
-      expect(model.remoteDataTrackPublications[0].remoteDataTrack.maxPacketLifeTime, remoteDataTrack.maxPacketLifeTime);
-      expect(model.remoteDataTrackPublications[0].remoteDataTrack.maxRetransmits, remoteDataTrack.maxRetransmits);
-      expect(model.remoteDataTrackPublications[0].remoteDataTrack.reliable, remoteDataTrack.reliable);
-      expect(model.remoteDataTrackPublications[0].remoteDataTrack.ordered, remoteDataTrack.ordered);
+      expect(model.remoteDataTrackPublications[0].remoteDataTrack!.enabled, remoteDataTrack.enabled);
+      expect(model.remoteDataTrackPublications[0].remoteDataTrack!.sid, remoteDataTrack.sid);
+      expect(model.remoteDataTrackPublications[0].remoteDataTrack!.name, remoteDataTrack.name);
+      expect(model.remoteDataTrackPublications[0].remoteDataTrack!.maxPacketLifeTime, remoteDataTrack.maxPacketLifeTime);
+      expect(model.remoteDataTrackPublications[0].remoteDataTrack!.maxRetransmits, remoteDataTrack.maxRetransmits);
+      expect(model.remoteDataTrackPublications[0].remoteDataTrack!.reliable, remoteDataTrack.reliable);
+      expect(model.remoteDataTrackPublications[0].remoteDataTrack!.ordered, remoteDataTrack.ordered);
 
       expect(model.remoteVideoTrackPublications[0].enabled, publicationEnabled);
       expect(model.remoteVideoTrackPublications[0].subscribed, publicationSubscribed);
       expect(model.remoteVideoTrackPublications[0].sid, publicationSid);
       expect(model.remoteVideoTrackPublications[0].name, publicationName);
-      expect(model.remoteVideoTrackPublications[0].remoteVideoTrack.sid, remoteVideoTrack.sid);
-      expect(model.remoteVideoTrackPublications[0].remoteVideoTrack.name, remoteVideoTrack.name);
-      expect(model.remoteVideoTrackPublications[0].remoteVideoTrack.enabled, remoteVideoTrack.enabled);
-    });
-
-    test('should not construct from incorrect Map', () {
-      final map = {'identity': null, 'sid': null};
-      expect(() => RemoteParticipantModel.fromEventChannelMap(map), throwsAssertionError);
+      expect(model.remoteVideoTrackPublications[0].remoteVideoTrack!.sid, remoteVideoTrack.sid);
+      expect(model.remoteVideoTrackPublications[0].remoteVideoTrack!.name, remoteVideoTrack.name);
+      expect(model.remoteVideoTrackPublications[0].remoteVideoTrack!.enabled, remoteVideoTrack.enabled);
     });
   });
 
@@ -116,13 +112,15 @@ void main() {
         remoteAudioTrackPublications: [ModelInstances.remoteAudioTrackPublicationModel],
         remoteDataTrackPublications: [ModelInstances.remoteDataTrackPublicationModel],
         remoteVideoTrackPublications: [ModelInstances.remoteVideoTrackPublicationModel],
+        networkQualityLevel: networkQualityLevel,
       );
       expect(model.toString(), '''{ 
       identity: $identity,
       sid: $sid,
       remoteAudioTrackPublications: [ ${ModelInstances.remoteAudioTrackPublicationModel.toString()}, ],
       remoteDataTrackPublications: [ ${ModelInstances.remoteDataTrackPublicationModel.toString()}, ],
-      remoteVideoTrackPublications: [ ${ModelInstances.remoteVideoTrackPublicationModel.toString()}, ]
+      remoteVideoTrackPublications: [ ${ModelInstances.remoteVideoTrackPublicationModel.toString()}, ],
+      networkQualityLevel: $networkQualityLevel
       }''');
     });
   });

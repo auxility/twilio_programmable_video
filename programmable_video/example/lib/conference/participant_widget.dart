@@ -1,57 +1,65 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:twilio_programmable_video/twilio_programmable_video.dart';
+import 'package:twilio_programmable_video_example/conference/network_quality_indicator.dart';
 
 class ParticipantBuffer {
   final bool audioEnabled;
-  final String id;
+  final String? id;
 
   ParticipantBuffer({
-    @required this.audioEnabled,
-    @required this.id,
-  })  : assert(audioEnabled != null),
-        assert(id != null);
+    required this.audioEnabled,
+    required this.id,
+  });
 }
 
 class ParticipantWidget extends StatelessWidget {
   final Widget child;
-  final String id;
+  final String? id;
   final bool audioEnabled;
   final bool videoEnabled;
   final bool isRemote;
   final bool isDummy;
   final bool isDominant;
+  final bool audioEnabledLocally;
+  final VoidCallback? toggleMute;
+  final NetworkQualityLevel networkQualityLevel;
+  final Stream<NetworkQualityLevelChangedEvent>? onNetworkQualityChanged;
 
   const ParticipantWidget({
-    Key key,
-    @required this.child,
-    @required this.audioEnabled,
-    @required this.videoEnabled,
-    @required this.id,
-    @required this.isRemote,
+    Key? key,
+    required this.child,
+    required this.audioEnabled,
+    required this.videoEnabled,
+    required this.id,
+    required this.isRemote,
+    this.networkQualityLevel = NetworkQualityLevel.NETWORK_QUALITY_LEVEL_UNKNOWN,
+    this.onNetworkQualityChanged,
+    this.toggleMute,
+    this.audioEnabledLocally = true,
     this.isDominant = false,
     this.isDummy = false,
-  })  : assert(child != null),
-        assert(audioEnabled != null),
-        assert(videoEnabled != null),
-        assert(isRemote != null),
-        assert(isDominant != null),
-        assert(isDummy != null),
-        super(key: key);
+  }) : super(key: key);
 
   ParticipantWidget copyWith({
-    Widget child,
-    bool audioEnabled,
-    bool videoEnabled,
-    bool isDominant,
+    Widget? child,
+    bool? audioEnabled,
+    bool? videoEnabled,
+    bool? isDominant,
+    bool? audioEnabledLocally,
   }) {
     return ParticipantWidget(
       id: id,
-      child: child ?? this.child,
       audioEnabled: audioEnabled ?? this.audioEnabled,
       videoEnabled: videoEnabled ?? this.videoEnabled,
       isDominant: isDominant ?? this.isDominant,
+      audioEnabledLocally: audioEnabledLocally ?? this.audioEnabledLocally,
       isRemote: isRemote,
+      toggleMute: toggleMute,
+      networkQualityLevel: networkQualityLevel,
+      onNetworkQualityChanged: onNetworkQualityChanged,
+      child: child ?? this.child,
     );
   }
 
@@ -89,6 +97,8 @@ class ParticipantWidget extends StatelessWidget {
     ));
     if (!audioEnabled) {
       icons.add(_buildAudioEnabledIcon());
+    } else if (!audioEnabledLocally) {
+      icons.add(_buildMutedIcon());
     }
     if (icons.isNotEmpty) {
       if (isRemote) {
@@ -100,6 +110,8 @@ class ParticipantWidget extends StatelessWidget {
           rows.add(_buildRow(_fitText('The microphone is off', Colors.black26)));
         } else if (!videoEnabled) {
           rows.add(_buildRow(_fitText('The camera is off', Colors.white24)));
+        } else if (!audioEnabledLocally) {
+          rows.add(_buildRow(_fitText('You muted them', Colors.black26)));
         }
         children.add(
           Column(
@@ -117,8 +129,20 @@ class ParticipantWidget extends StatelessWidget {
       }
     }
 
-    return Stack(
-      children: children,
+    children.add(NetworkQualityIndicator(
+      networkQualityIndicatorPosition: NetworkQualityIndicatorPosition.bottomCenter,
+      bottom: 10,
+      networkQualityLevel: networkQualityLevel,
+      showFromNetworkQualityLevelAndBelow: NetworkQualityLevel.NETWORK_QUALITY_LEVEL_THREE,
+      onNetworkQualityChanged: onNetworkQualityChanged,
+    ));
+
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onLongPress: isRemote && toggleMute != null ? toggleMute : null,
+      child: Stack(
+        children: children,
+      ),
     );
   }
 
@@ -166,6 +190,7 @@ class ParticipantWidget extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       child: CircleAvatar(
         maxRadius: 15,
+        backgroundColor: Colors.white24,
         child: FittedBox(
           child: Icon(
             Icons.mic_off,
@@ -173,7 +198,23 @@ class ParticipantWidget extends StatelessWidget {
             key: Key('microphone-off-icon'),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMutedIcon() {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: CircleAvatar(
+        maxRadius: 15,
         backgroundColor: Colors.white24,
+        child: FittedBox(
+          child: Icon(
+            Icons.volume_off,
+            color: Colors.black,
+            key: Key('microphone-off-icon'),
+          ),
+        ),
       ),
     );
   }
@@ -183,6 +224,7 @@ class ParticipantWidget extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       child: CircleAvatar(
         maxRadius: 15,
+        backgroundColor: Colors.white24,
         child: FittedBox(
           child: Icon(
             Icons.videocam_off,
@@ -190,7 +232,6 @@ class ParticipantWidget extends StatelessWidget {
             key: Key('videocam-off-icon'),
           ),
         ),
-        backgroundColor: Colors.white24,
       ),
     );
   }
