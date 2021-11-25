@@ -22,6 +22,8 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
         _remoteParticipantChannel = EventChannel('twilio_programmable_video/remote'),
         _localParticipantChannel = EventChannel('twilio_programmable_video/local'),
         _remoteDataTrackChannel = EventChannel('twilio_programmable_video/remote_data_track'),
+        _audioNotificationChannel = EventChannel('twilio_programmable_video/audio_notification'),
+        _loggingChannel = EventChannel('twilio_programmable_video/logging'),
         super();
 
   /// This constructor is only used for testing and shouldn't be accessed by
@@ -34,6 +36,8 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
     this._remoteParticipantChannel,
     this._localParticipantChannel,
     this._remoteDataTrackChannel,
+    this._audioNotificationChannel,
+    this._loggingChannel,
   );
 
   //#region Functions
@@ -48,16 +52,18 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
 
   /// You can listen to these logs on the [loggingStream].
   @override
-  Future<void> setNativeDebug(bool native) {
+  Future<void> setNativeDebug(bool native, bool audio) {
     return _methodChannel.invokeMethod(
       'debug',
       {
         'native': native,
+        'audio': audio,
       },
     );
   }
 
   /// Calls native code to set the speaker mode on or off.
+  @Deprecated('Use setAudioSettings for more reliable audio output management.')
   @override
   Future<bool?> setSpeakerphoneOn(bool on) {
     return _methodChannel.invokeMethod(
@@ -68,7 +74,53 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
     );
   }
 
+  /// Calls native code to set the speaker and bluetooth settings.
+  /// The native layer will then observe changes to audio state and apply
+  /// these settings as needed.
+  ///
+  /// Bluetooth is given priority over speakers.
+  /// In short, if:
+  /// `speakerphoneEnabled == true && bluetoothEnabled == true`
+  /// and a bluetooth device is connected, it will be used.
+  /// If no bluetooth device is connected, the speaker will be used.
+  ///
+  /// if:
+  /// `speakerphoneEnabled == true && bluetoothEnabled == false`
+  /// and a bluetooth device is connected, the speaker will be used.
+  ///
+  /// if: `speakerphoneEnabled == false && bluetoothEnabled == false`
+  /// The receiver, if the device has one, will be used.
+  /// If there is a wired headset connected to an android device in this
+  /// scenario, it will be used.
+  @override
+  Future setAudioSettings(bool speakerphoneEnabled, bool bluetoothPreferred) {
+    return _methodChannel.invokeMethod(
+      'setAudioSettings',
+      {
+        'speakerphoneEnabled': speakerphoneEnabled,
+        'bluetoothPreferred': bluetoothPreferred,
+      },
+    );
+  }
+
+  @override
+  Future<Map<String, dynamic>> getAudioSettings() async {
+    final result = await _methodChannel.invokeMethod('getAudioSettings', null);
+    return Map<String, dynamic>.from(result);
+  }
+
+  /// Calls native code to reset the speaker and bluetooth settings to their default values.
+  /// The native layer will stop observing and managing changes to audio state.
+  /// Default values are:
+  /// `speakerphoneEnabled = true`
+  /// `bluetoothEnabled = true`
+  @override
+  Future disableAudioSettings() {
+    return _methodChannel.invokeMethod('disableAudioSettings', null);
+  }
+
   /// Calls native code to check if speaker mode is enabled.
+  @Deprecated('Use getAudioSettings for more reliable audio output management.')
   @override
   Future<bool?> getSpeakerphoneOn() {
     return _methodChannel.invokeMethod('getSpeakerphoneOn');
@@ -239,7 +291,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
       }
     }
 
-    return SkipableCameraEvent();
+    return SkippableCameraEvent();
   }
 
 //#endregion
@@ -266,7 +318,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
 
     // If no room data is received, skip the event.
     final room = data['room'];
-    if (room == null) return SkipAbleRoomEvent();
+    if (room == null) return SkippableRoomEvent();
 
     final roomMap = Map<String, dynamic>.from(room);
 
@@ -338,7 +390,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
       case 'dominantSpeakerChanged':
         return DominantSpeakerChanged(roomModel, dominantSpeaker);
       default:
-        return SkipAbleRoomEvent();
+        return SkippableRoomEvent();
     }
   }
 
@@ -367,7 +419,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
 
     // If no remoteParticipant data is received, skip the event.
     if (data['remoteParticipant'] == null) {
-      return SkipAbleRemoteParticipantEvent();
+      return SkippableRemoteParticipantEvent();
     }
     final remoteParticipantMap = Map<String, dynamic>.from(data['remoteParticipant']);
     final remoteParticipantModel = RemoteParticipantModel.fromEventChannelMap(remoteParticipantMap);
@@ -446,7 +498,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 remoteAudioTrackPublicationModel: remoteAudioTrackPublicationModel,
                 remoteAudioTrackModel: remoteAudioTrackModel,
               )
-            : SkipAbleRemoteParticipantEvent();
+            : SkippableRemoteParticipantEvent();
       case 'audioTrackSubscriptionFailed':
         return (twilioException != null)
             ? RemoteAudioTrackSubscriptionFailed(
@@ -454,7 +506,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 remoteAudioTrackPublicationModel: remoteAudioTrackPublicationModel,
                 exception: twilioException,
               )
-            : SkipAbleRemoteParticipantEvent();
+            : SkippableRemoteParticipantEvent();
       case 'audioTrackUnpublished':
         return RemoteAudioTrackUnpublished(
           remoteParticipantModel,
@@ -467,7 +519,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 remoteAudioTrackPublicationModel: remoteAudioTrackPublicationModel,
                 remoteAudioTrackModel: remoteAudioTrackModel,
               )
-            : SkipAbleRemoteParticipantEvent();
+            : SkippableRemoteParticipantEvent();
       case 'dataTrackPublished':
         return RemoteDataTrackPublished(
           remoteParticipantModel,
@@ -480,7 +532,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 remoteDataTrackPublicationModel: remoteDataTrackPublicationModel,
                 remoteDataTrackModel: remoteDataTrackModel,
               )
-            : SkipAbleRemoteParticipantEvent();
+            : SkippableRemoteParticipantEvent();
       case 'dataTrackSubscriptionFailed':
         assert(twilioException != null);
         return RemoteDataTrackSubscriptionFailed(
@@ -500,7 +552,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 remoteDataTrackPublicationModel: remoteDataTrackPublicationModel,
                 remoteDataTrackModel: remoteDataTrackModel,
               )
-            : SkipAbleRemoteParticipantEvent();
+            : SkippableRemoteParticipantEvent();
       case 'videoTrackDisabled':
         return RemoteVideoTrackDisabled(
           remoteParticipantModel,
@@ -523,7 +575,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 remoteVideoTrackPublicationModel: remoteVideoTrackPublicationModel,
                 remoteVideoTrackModel: remoteVideoTrackModel,
               )
-            : SkipAbleRemoteParticipantEvent();
+            : SkippableRemoteParticipantEvent();
       case 'videoTrackSubscriptionFailed':
         return (twilioException != null)
             ? RemoteVideoTrackSubscriptionFailed(
@@ -531,7 +583,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 remoteVideoTrackPublicationModel: remoteVideoTrackPublicationModel,
                 exception: twilioException,
               )
-            : SkipAbleRemoteParticipantEvent();
+            : SkippableRemoteParticipantEvent();
       case 'videoTrackUnpublished':
         return RemoteVideoTrackUnpublished(
           remoteParticipantModel,
@@ -544,7 +596,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 remoteVideoTrackPublicationModel: remoteVideoTrackPublicationModel,
                 remoteVideoTrackModel: remoteVideoTrackModel,
               )
-            : SkipAbleRemoteParticipantEvent();
+            : SkippableRemoteParticipantEvent();
       case 'networkQualityLevelChanged':
         NetworkQualityLevel? networkQualityLevel;
         if (data['networkQualityLevel'] != null) {
@@ -557,9 +609,9 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 remoteParticipantModel,
                 networkQualityLevelEnum,
               )
-            : SkipAbleRemoteParticipantEvent();
+            : SkippableRemoteParticipantEvent();
       default:
-        return SkipAbleRemoteParticipantEvent();
+        return SkippableRemoteParticipantEvent();
     }
   }
 
@@ -582,7 +634,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
     final data = Map<String, dynamic>.from(event['data']);
     // If no localParticipant data is received, skip the event.
     if (data['localParticipant'] == null) {
-      return SkipAbleLocalParticipantEvent();
+      return SkippableLocalParticipantEvent();
     }
 
     final localParticipantModel = LocalParticipantModel.fromEventChannelMap(Map<String, dynamic>.from(data['localParticipant']));
@@ -611,7 +663,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 localParticipantModel,
                 localAudioTrackPublicationModel,
               )
-            : SkipAbleLocalParticipantEvent();
+            : SkippableLocalParticipantEvent();
       case 'audioTrackPublicationFailed':
         TrackModel? localAudioTrack;
         if (data['localAudioTrack'] != null) {
@@ -626,7 +678,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 exception: exception,
                 localParticipantModel: localParticipantModel,
               )
-            : SkipAbleLocalParticipantEvent();
+            : SkippableLocalParticipantEvent();
       case 'dataTrackPublished':
         LocalDataTrackPublicationModel? localDataTrackPublication;
         if (data['localDataTrackPublication'] != null) {
@@ -640,7 +692,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 localParticipantModel,
                 localDataTrackPublicationModel,
               )
-            : SkipAbleLocalParticipantEvent();
+            : SkippableLocalParticipantEvent();
       case 'dataTrackPublicationFailed':
         LocalDataTrackModel? localDataTrack;
         if (data['localDataTrack'] != null) {
@@ -655,7 +707,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 exception: exception,
                 localParticipantModel: localParticipantModel,
               )
-            : SkipAbleLocalParticipantEvent();
+            : SkippableLocalParticipantEvent();
       case 'videoTrackPublished':
         LocalVideoTrackPublicationModel? localVideoTrackPublication;
         if (data['localVideoTrackPublication'] != null) {
@@ -669,7 +721,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 localParticipantModel,
                 localVideoTrackPublicationModel,
               )
-            : SkipAbleLocalParticipantEvent();
+            : SkippableLocalParticipantEvent();
       case 'videoTrackPublicationFailed':
         LocalVideoTrackModel? localVideoTrack;
         if (data['localVideoTrack'] != null) {
@@ -684,7 +736,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 exception: exception,
                 localParticipantModel: localParticipantModel,
               )
-            : SkipAbleLocalParticipantEvent();
+            : SkippableLocalParticipantEvent();
       case 'networkQualityLevelChanged':
         NetworkQualityLevel? networkQualityLevel;
         if (data['networkQualityLevel'] != null) {
@@ -697,9 +749,9 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
                 localParticipantModel,
                 networkQualityLevelEnum,
               )
-            : SkipAbleLocalParticipantEvent();
+            : SkippableLocalParticipantEvent();
       default:
-        return SkipAbleLocalParticipantEvent();
+        return SkippableLocalParticipantEvent();
     }
   }
 
@@ -727,7 +779,7 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
     final data = Map<String, dynamic>.from(event['data']);
     // If no RemoteDataTrack data is received, skip the event.
     if (data['remoteDataTrack'] == null) {
-      return SkipAbleRemoteDataTrackEvent();
+      return SkippableRemoteDataTrackEvent();
     }
     final remoteDataTrackModel = RemoteDataTrackModel.fromEventChannelMap(Map<String, dynamic>.from(data['remoteDataTrack']));
     switch (eventName) {
@@ -751,9 +803,61 @@ class MethodChannelProgrammableVideo extends ProgrammableVideoPlatform {
 
 //#endregion
 
+//#region audioNotificationStream
+
+  /// EventChannel over which the native code sends audio route change notifications.
+  final EventChannel _audioNotificationChannel;
+
+  Stream<BaseAudioNotificationEvent>? _audioNotificationStream;
+
+  /// Stream of the BaseRemoteDataTrackEvent model.
+  ///
+  /// This stream is used to update the RemoteDataTrack in a plugin implementation.
+  @override
+  Stream<BaseAudioNotificationEvent> audioNotificationStream() {
+    _audioNotificationStream ??= _audioNotificationChannel.receiveBroadcastStream().map(_parseAudioNotificationEvent);
+    return _audioNotificationStream!;
+  }
+
+  /// Parses a map send from native code to a [BaseRemoteDataTrackEvent].
+  BaseAudioNotificationEvent _parseAudioNotificationEvent(dynamic event) {
+    print('ProgrammableVideoInstance::parseAudioNotificationEvent => $event');
+    final eventName = event['name'];
+    final data = Map<String, dynamic>.from(event['data']);
+    final deviceName = data['deviceName'];
+    final bluetooth = data['bluetooth'] ?? false;
+    final wired = data['wired'] ?? false;
+
+    // If no device name is received, skip the event.
+    if (deviceName == null) {
+      return SkippableAudioEvent();
+    }
+
+    switch (eventName) {
+      case 'newDeviceAvailable':
+        return NewDeviceAvailableEvent(
+          deviceName: deviceName,
+          bluetooth: bluetooth,
+          wired: wired,
+        );
+      case 'oldDeviceUnavailable':
+        return OldDeviceUnavailableEvent(
+          deviceName: deviceName,
+          bluetooth: bluetooth,
+          wired: wired,
+        );
+      default:
+        return SkippableAudioEvent();
+    }
+  }
+
+//#endregion
+
   /// Stream of dynamic that contains all the native logging output.
+  final EventChannel _loggingChannel;
+
   @override
   Stream<dynamic> loggingStream() {
-    return EventChannel('twilio_programmable_video/logging').receiveBroadcastStream();
+    return _loggingChannel.receiveBroadcastStream();
   }
 }

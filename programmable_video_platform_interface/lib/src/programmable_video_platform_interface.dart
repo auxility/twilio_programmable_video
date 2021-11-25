@@ -48,16 +48,36 @@ abstract class ProgrammableVideoPlatform extends PlatformInterface {
   }
 
   /// You can listen to these logs on the [loggingStream].
-  Future<void> setNativeDebug(bool native) {
+  Future<void> setNativeDebug(bool native, bool audio) {
     throw UnimplementedError('setNativeDebug() has not been implemented.');
   }
 
   /// Calls native code to set the speaker mode on or off.
+  @Deprecated('Use setAudioSettings for more reliable audio output management.')
   Future<bool?> setSpeakerphoneOn(bool on) {
     throw UnimplementedError('setSpeakerphoneOn() has not been implemented.');
   }
 
+  /// Calls native code to set the speaker and bluetooth settings.
+  /// The native layer will then observe changes to audio state and apply
+  /// these settings as needed.
+  Future setAudioSettings(bool speakerphoneEnabled, bool bluetoothPreferred) {
+    throw UnimplementedError('setAudioSettings() has not been implemented.');
+  }
+
+  /// Calls native code to get the current speaker and bluetooth settings.
+  Future<Map<String, dynamic>> getAudioSettings() {
+    throw UnimplementedError('getAudioSettings() has not been implemented.');
+  }
+
+  /// Calls native code to reset the speaker and bluetooth settings to their default values.
+  /// The native layer will stop observing and managing changes to audio state.
+  Future disableAudioSettings() {
+    throw UnimplementedError('disableAudioSettings() has not been implemented.');
+  }
+
   /// Calls native code to check if speaker mode is enabled.
+  @Deprecated('Use getAudioSettings for more reliable audio output management.')
   Future<bool?> getSpeakerphoneOn() {
     throw UnimplementedError('getSpeakerphoneOn() has not been implemented.');
   }
@@ -162,6 +182,13 @@ abstract class ProgrammableVideoPlatform extends PlatformInterface {
   /// This stream is used to update the RemoteDataTrack in a plugin implementation.
   Stream<BaseRemoteDataTrackEvent>? remoteDataTrackStream(int internalId) {
     throw UnimplementedError('remoteDataTrackStream() has not been implemented');
+  }
+
+  /// Stream of the BaseRemoteDataTrackEvent model.
+  ///
+  /// This stream is used to update the RemoteDataTrack in a plugin implementation.
+  Stream<BaseAudioNotificationEvent> audioNotificationStream() {
+    throw UnimplementedError('audioNotificationStream() has not been implemented');
   }
 
   /// Stream of dynamic that contains all the native logging output.
