@@ -1,3 +1,13 @@
+## 0.12.0
+
+- **BREAKING**: Updated permission_handler dependency from 7.0.0 to 8.3.0
+
+## 0.11.1
+
+- Added null-safety check for `BluetoothAdapter.getDefaultAdapter()`. It returns null when called on an Android Emulator.
+- Updated TwilioVideo iOS SDK from v4.4 to v4.6.
+- Replaced `jcenter` with `mavenCentral` in the `build.gradle`.
+
 ## 0.11.0+1
 
 - Throw `ActiveCallException` if we cannot activate the `AVAudioSession` (iOS) or get Audio Focus (Android) on `connect`.
