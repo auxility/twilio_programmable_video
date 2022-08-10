@@ -19,8 +19,10 @@ class RemoteVideoTrack extends VideoTrack {
   ) : super(_enabled, _name);
 
   /// Construct from a [RemoteVideoTrackModel].
-  factory RemoteVideoTrack._fromModel(RemoteVideoTrackModel model, RemoteParticipant remoteParticipant) {
-    return RemoteVideoTrack(model.sid, model.enabled, model.name, remoteParticipant);
+  factory RemoteVideoTrack._fromModel(
+      RemoteVideoTrackModel model, RemoteParticipant remoteParticipant) {
+    return RemoteVideoTrack(
+        model.sid, model.enabled, model.name, remoteParticipant);
   }
 
   /// Returns a native widget.
@@ -37,6 +39,7 @@ class RemoteVideoTrack extends VideoTrack {
     };
 
     if (Platform.isAndroid) {
+/*
       return _widget ??= AndroidView(
         key: key,
         viewType: 'twilio_programmable_video/views',
@@ -44,6 +47,37 @@ class RemoteVideoTrack extends VideoTrack {
         creationParamsCodec: const StandardMessageCodec(),
         onPlatformViewCreated: (int viewId) {
           TwilioProgrammableVideo._log('RemoteVideoTrack => View created: $viewId, creationParams: $creationParams');
+        },
+      );
+*/
+      void onPlatformViewCreated(int viewId) => TwilioProgrammableVideo._log(
+            'RemoteVideoTrack => View created: $viewId, creationParams: $creationParams',
+          );
+      return _widget ??= PlatformViewLink(
+        key: key,
+        viewType: 'twilio_programmable_video/views',
+        surfaceFactory: (context, controller) => AndroidViewSurface(
+          controller: controller as AndroidViewController,
+          gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{},
+          hitTestBehavior: PlatformViewHitTestBehavior.opaque,
+        ),
+        onCreatePlatformView: (params) {
+          final controller = PlatformViewsService.initExpensiveAndroidView(
+            viewType: 'twilio_programmable_video/views',
+            creationParams: creationParams,
+            creationParamsCodec: const StandardMessageCodec(),
+            layoutDirection: TextDirection.ltr,
+            onFocus: () => params.onFocusChanged(true),
+            id: params.id,
+          );
+          controller.addOnPlatformViewCreatedListener(
+            params.onPlatformViewCreated,
+          );
+          controller.addOnPlatformViewCreatedListener(
+            onPlatformViewCreated,
+          );
+          controller.create();
+          return controller;
         },
       );
     }
@@ -55,11 +89,13 @@ class RemoteVideoTrack extends VideoTrack {
         creationParams: creationParams,
         creationParamsCodec: const StandardMessageCodec(),
         onPlatformViewCreated: (int viewId) {
-          TwilioProgrammableVideo._log('RemoteVideoTrack => View created: $viewId, creationParams: $creationParams');
+          TwilioProgrammableVideo._log(
+              'RemoteVideoTrack => View created: $viewId, creationParams: $creationParams');
         },
       );
     }
 
-    throw Exception('No widget implementation found for platform \'${Platform.operatingSystem}\'');
+    throw Exception(
+        'No widget implementation found for platform \'${Platform.operatingSystem}\'');
   }
 }

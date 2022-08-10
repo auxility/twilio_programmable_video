@@ -15,12 +15,16 @@ class LocalVideoTrack extends VideoTrack {
   /// Retrieves the [VideoCapturer].
   VideoCapturer get videoCapturer => _videoCapturer;
 
-  LocalVideoTrack(enabled, this._videoCapturer, {String name = ''}) : super(enabled, name);
+  LocalVideoTrack(enabled, this._videoCapturer, {String name = ''})
+      : super(enabled, name);
 
   /// Construct from a [LocalVideoTrackModel].
   factory LocalVideoTrack._fromModel(LocalVideoTrackModel model) {
-    var videoCapturer = model.cameraCapturer.type == 'CameraCapturer' ? CameraCapturer._fromModel(model.cameraCapturer) : throw Exception('Received unknown VideoCapturer');
-    var localVideoTrack = LocalVideoTrack(model.enabled, videoCapturer, name: model.name);
+    var videoCapturer = model.cameraCapturer.type == 'CameraCapturer'
+        ? CameraCapturer._fromModel(model.cameraCapturer)
+        : throw Exception('Received unknown VideoCapturer');
+    var localVideoTrack =
+        LocalVideoTrack(model.enabled, videoCapturer, name: model.name);
     localVideoTrack._updateFromModel(model);
     return localVideoTrack;
   }
@@ -33,7 +37,8 @@ class LocalVideoTrack extends VideoTrack {
   /// Create the local video track.
   Future<void> create() async {
     try {
-      await ProgrammableVideoPlatform.instance.createVideoTrack(_toModel() as LocalVideoTrackModel);
+      await ProgrammableVideoPlatform.instance
+          .createVideoTrack(_toModel() as LocalVideoTrackModel);
     } on PlatformException catch (err) {
       throw TwilioProgrammableVideo._convertException(err);
     }
@@ -104,13 +109,44 @@ class LocalVideoTrack extends VideoTrack {
     };
 
     if (Platform.isAndroid) {
+      void onPlatformViewCreated(int viewId) => TwilioProgrammableVideo._log(
+            'LocalVideoTrack => View created: $viewId, creationParams: $creationParams',
+          );
+/*
       return _widget ??= AndroidView(
         key: key,
         viewType: 'twilio_programmable_video/views',
         creationParams: creationParams,
         creationParamsCodec: const StandardMessageCodec(),
-        onPlatformViewCreated: (int viewId) {
-          TwilioProgrammableVideo._log('LocalVideoTrack => View created: $viewId, creationParams: $creationParams');
+        onPlatformViewCreated: onPlatformViewCreated,
+      );
+*/
+
+      return _widget ??= PlatformViewLink(
+        key: key,
+        viewType: 'twilio_programmable_video/views',
+        surfaceFactory: (context, controller) => AndroidViewSurface(
+          controller: controller as AndroidViewController,
+          gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{},
+          hitTestBehavior: PlatformViewHitTestBehavior.opaque,
+        ),
+        onCreatePlatformView: (params) {
+          final controller = PlatformViewsService.initExpensiveAndroidView(
+            viewType: 'twilio_programmable_video/views',
+            creationParams: creationParams,
+            creationParamsCodec: const StandardMessageCodec(),
+            layoutDirection: TextDirection.ltr,
+            onFocus: () => params.onFocusChanged(true),
+            id: params.id,
+          );
+          controller.addOnPlatformViewCreatedListener(
+            params.onPlatformViewCreated,
+          );
+          controller.addOnPlatformViewCreatedListener(
+            onPlatformViewCreated,
+          );
+          controller.create();
+          return controller;
         },
       );
     }
@@ -122,12 +158,14 @@ class LocalVideoTrack extends VideoTrack {
         creationParams: creationParams,
         creationParamsCodec: const StandardMessageCodec(),
         onPlatformViewCreated: (int viewId) {
-          TwilioProgrammableVideo._log('LocalVideoTrack => View created: $viewId, creationParams: $creationParams');
+          TwilioProgrammableVideo._log(
+              'LocalVideoTrack => View created: $viewId, creationParams: $creationParams');
         },
       );
     }
 
-    throw Exception('No widget implementation found for platform \'${Platform.operatingSystem}\'');
+    throw Exception(
+        'No widget implementation found for platform \'${Platform.operatingSystem}\'');
   }
 
   /// Create [LocalVideoTrackModel] from properties.
@@ -136,7 +174,8 @@ class LocalVideoTrack extends VideoTrack {
     return LocalVideoTrackModel(
       enabled: _enabled,
       name: name,
-      cameraCapturer: CameraCapturerModel(cameraCapturer.source, 'CameraCapturer'),
+      cameraCapturer:
+          CameraCapturerModel(cameraCapturer.source, 'CameraCapturer'),
     );
   }
 }
