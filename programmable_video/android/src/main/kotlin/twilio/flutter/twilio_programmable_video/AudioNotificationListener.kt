@@ -26,13 +26,15 @@ class AudioNotificationListener() : BaseListener() {
 
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile?) {
             debug("onServiceConnected => profile: $profile, proxy: $proxy")
-            if (profile == BluetoothProfile.HEADSET) {
-                bluetoothProfile = proxy
-                if (bluetoothProfile!!.connectedDevices.size > 0 &&
-                    TwilioProgrammableVideoPlugin.pluginHandler.audioSettings.bluetoothPreferred) {
-                    TwilioProgrammableVideoPlugin.pluginHandler.applyAudioSettings()
-                }
-            }
+            // below code is crashing on android 12 that why comented it.
+            // https://gitlab.com/twilio-flutter/programmable-video/-/issues/198
+//            if (profile == BluetoothProfile.HEADSET) {
+//                bluetoothProfile = proxy
+//                if (bluetoothProfile!!.connectedDevices.size > 0 &&
+//                    TwilioProgrammableVideoPlugin.pluginHandler.audioSettings.bluetoothPreferred) {
+//                    TwilioProgrammableVideoPlugin.pluginHandler.applyAudioSettings()
+//                }
+//            }
         }
     }
 
