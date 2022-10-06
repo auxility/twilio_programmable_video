@@ -6,8 +6,6 @@ class RemoteVideoTrack extends VideoTrack {
 
   final RemoteParticipant _remoteParticipant;
 
-  Widget? _widget;
-
   /// Returns the server identifier. This value uniquely identifies the remote video track within the scope of a [Room].
   String get sid => _sid;
 
@@ -31,71 +29,21 @@ class RemoteVideoTrack extends VideoTrack {
   /// If you provide a [key] make sure it is unique among all [VideoTrack]s otherwise Flutter might send the wrong creation params to the native side.
   Widget widget({bool mirror = false, Key? key}) {
     key ??= ValueKey(_sid);
+    final remoteParticipantSid = _remoteParticipant.sid;
 
-    var creationParams = {
-      'remoteParticipantSid': _remoteParticipant.sid,
-      'remoteVideoTrackSid': _sid,
-      'mirror': mirror,
-    };
-
-    if (Platform.isAndroid) {
-/*
-      return _widget ??= AndroidView(
-        key: key,
-        viewType: 'twilio_programmable_video/views',
-        creationParams: creationParams,
-        creationParamsCodec: const StandardMessageCodec(),
-        onPlatformViewCreated: (int viewId) {
-          TwilioProgrammableVideo._log('RemoteVideoTrack => View created: $viewId, creationParams: $creationParams');
-        },
-      );
-*/
-      void onPlatformViewCreated(int viewId) => TwilioProgrammableVideo._log(
-            'RemoteVideoTrack => View created: $viewId, creationParams: $creationParams',
-          );
-      return _widget ??= PlatformViewLink(
-        key: key,
-        viewType: 'twilio_programmable_video/views',
-        surfaceFactory: (context, controller) => AndroidViewSurface(
-          controller: controller as AndroidViewController,
-          gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{},
-          hitTestBehavior: PlatformViewHitTestBehavior.opaque,
-        ),
-        onCreatePlatformView: (params) {
-          final controller = PlatformViewsService.initExpensiveAndroidView(
-            viewType: 'twilio_programmable_video/views',
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            layoutDirection: TextDirection.ltr,
-            onFocus: () => params.onFocusChanged(true),
-            id: params.id,
-          );
-          controller.addOnPlatformViewCreatedListener(
-            params.onPlatformViewCreated,
-          );
-          controller.addOnPlatformViewCreatedListener(
-            onPlatformViewCreated,
-          );
-          controller.create();
-          return controller;
-        },
+    if (remoteParticipantSid == null) {
+      throw MissingParameterException(
+        code: 'RemoteParticipantSidNotFound',
+        message: 'Cannot create widget for VideoTrack sid: $_sid. '
+            'Host RemoteParticipant has no SID.',
       );
     }
 
-    if (Platform.isIOS) {
-      return _widget ??= UiKitView(
-        key: key,
-        viewType: 'twilio_programmable_video/views',
-        creationParams: creationParams,
-        creationParamsCodec: const StandardMessageCodec(),
-        onPlatformViewCreated: (int viewId) {
-          TwilioProgrammableVideo._log(
-              'RemoteVideoTrack => View created: $viewId, creationParams: $creationParams');
-        },
-      );
-    }
-
-    throw Exception(
-        'No widget implementation found for platform \'${Platform.operatingSystem}\'');
+    return ProgrammableVideoPlatform.instance.createRemoteVideoTrackWidget(
+      remoteParticipantSid: remoteParticipantSid,
+      remoteVideoTrackSid: _sid,
+      mirror: mirror,
+      key: key,
+    );
   }
 }

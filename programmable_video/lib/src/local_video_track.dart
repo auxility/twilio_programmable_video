@@ -2,8 +2,6 @@ part of twilio_programmable_video;
 
 /// A local video track that gets video frames from a specified [VideoCapturer].
 class LocalVideoTrack extends VideoTrack {
-  Widget? _widget;
-
   final VideoCapturer _videoCapturer;
 
   /// Check if it is enabled.
@@ -102,70 +100,10 @@ class LocalVideoTrack extends VideoTrack {
   Widget widget({bool mirror = true, Key? key}) {
     key ??= const ValueKey('Twilio_LocalParticipant');
 
-    var creationParams = {
-      'isLocal': true,
-      'mirror': mirror,
-      'name': name,
-    };
-
-    if (Platform.isAndroid) {
-      void onPlatformViewCreated(int viewId) => TwilioProgrammableVideo._log(
-            'LocalVideoTrack => View created: $viewId, creationParams: $creationParams',
-          );
-/*
-      return _widget ??= AndroidView(
-        key: key,
-        viewType: 'twilio_programmable_video/views',
-        creationParams: creationParams,
-        creationParamsCodec: const StandardMessageCodec(),
-        onPlatformViewCreated: onPlatformViewCreated,
-      );
-*/
-
-      return _widget ??= PlatformViewLink(
-        key: key,
-        viewType: 'twilio_programmable_video/views',
-        surfaceFactory: (context, controller) => AndroidViewSurface(
-          controller: controller as AndroidViewController,
-          gestureRecognizers: const <Factory<OneSequenceGestureRecognizer>>{},
-          hitTestBehavior: PlatformViewHitTestBehavior.opaque,
-        ),
-        onCreatePlatformView: (params) {
-          final controller = PlatformViewsService.initExpensiveAndroidView(
-            viewType: 'twilio_programmable_video/views',
-            creationParams: creationParams,
-            creationParamsCodec: const StandardMessageCodec(),
-            layoutDirection: TextDirection.ltr,
-            onFocus: () => params.onFocusChanged(true),
-            id: params.id,
-          );
-          controller.addOnPlatformViewCreatedListener(
-            params.onPlatformViewCreated,
-          );
-          controller.addOnPlatformViewCreatedListener(
-            onPlatformViewCreated,
-          );
-          controller.create();
-          return controller;
-        },
-      );
-    }
-
-    if (Platform.isIOS) {
-      return _widget ??= UiKitView(
-        key: key,
-        viewType: 'twilio_programmable_video/views',
-        creationParams: creationParams,
-        creationParamsCodec: const StandardMessageCodec(),
-        onPlatformViewCreated: (int viewId) {
-          TwilioProgrammableVideo._log(
-              'LocalVideoTrack => View created: $viewId, creationParams: $creationParams');
-        },
-      );
-    }
-
-    throw Exception(
-        'No widget implementation found for platform \'${Platform.operatingSystem}\'');
+    return ProgrammableVideoPlatform.instance.createLocalVideoTrackWidget(
+      mirror: mirror,
+      key: key,
+    );
   }
 
   /// Create [LocalVideoTrackModel] from properties.
@@ -174,8 +112,7 @@ class LocalVideoTrack extends VideoTrack {
     return LocalVideoTrackModel(
       enabled: _enabled,
       name: name,
-      cameraCapturer:
-          CameraCapturerModel(cameraCapturer.source, 'CameraCapturer'),
+      cameraCapturer: CameraCapturerModel(cameraCapturer.source, 'CameraCapturer'),
     );
   }
 }
